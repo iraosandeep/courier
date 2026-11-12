@@ -35,6 +35,13 @@ func (f *fakeTelegram) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	method := r.URL.Path[strings.LastIndex(r.URL.Path, "/")+1:]
 	var body map[string]any
 	json.NewDecoder(r.Body).Decode(&body)
+	// Like Telegram, reject optional fields sent as null.
+	for k, v := range body {
+		if v == nil {
+			json.NewEncoder(w).Encode(map[string]any{"ok": false, "error_code": 400, "description": "Bad Request: " + k + " must not be null"})
+			return
+		}
+	}
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	var result any = true

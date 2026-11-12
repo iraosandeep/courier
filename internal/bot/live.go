@@ -53,7 +53,11 @@ func (l *live) sync(ctx context.Context, full string, final bool) {
 			return err
 		})
 		if err != nil {
-			l.log.Debug("updating reply failed", "chat_id", l.chatID, "final", final, "err", err)
+			if final {
+				l.log.Error("sending reply failed", "chat_id", l.chatID, "err", err)
+			} else {
+				l.log.Debug("updating partial reply failed", "chat_id", l.chatID, "err", err)
+			}
 			return
 		}
 		l.shown[i] = p

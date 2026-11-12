@@ -148,24 +148,30 @@ func (c *Client) GetUpdates(ctx context.Context, offset int64, timeout time.Dura
 // SendMessage sends plain text (no parse_mode, so nothing needs escaping).
 func (c *Client) SendMessage(ctx context.Context, chatID int64, text string, markup *InlineKeyboardMarkup) (*Message, error) {
 	var m Message
-	err := c.call(ctx, "sendMessage", map[string]any{
+	err := c.call(ctx, "sendMessage", withMarkup(map[string]any{
 		"chat_id":              chatID,
 		"text":                 text,
-		"reply_markup":         markup,
 		"link_preview_options": map[string]bool{"is_disabled": true},
-	}, &m)
+	}, markup), &m)
 	return &m, err
 }
 
 // EditMessageText replaces a message's text.
 func (c *Client) EditMessageText(ctx context.Context, chatID, messageID int64, text string, markup *InlineKeyboardMarkup) error {
-	return c.call(ctx, "editMessageText", map[string]any{
+	return c.call(ctx, "editMessageText", withMarkup(map[string]any{
 		"chat_id":              chatID,
 		"message_id":           messageID,
 		"text":                 text,
-		"reply_markup":         markup,
 		"link_preview_options": map[string]bool{"is_disabled": true},
-	}, nil)
+	}, markup), nil)
+}
+
+// withMarkup adds reply_markup only when set: Telegram rejects a null one.
+func withMarkup(payload map[string]any, markup *InlineKeyboardMarkup) map[string]any {
+	if markup != nil {
+		payload["reply_markup"] = markup
+	}
+	return payload
 }
 
 // SendChatAction shows e.g. "typing…" in the chat for about five seconds.
